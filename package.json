@@ -1,0 +1,15 @@
+{
+  "name": "capacity-calc",
+  "version": "0.0.1",
+  "description": "Calculates Engineering Capacity from HiBob API",
+  "main": "index.js",
+  "author": "Jordan Crocker",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "dotenv": "^6.0.0"
+  },
+  "scripts": {
+    "capacity": "./index.js"
+  }
+}
