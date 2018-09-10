@@ -2,10 +2,10 @@
 'use strict'
 
 require('dotenv').load()
-require('console.table')
 
 const moment                = require('moment-business-days')
 const api                   = require('./api')
+const Table                 = require('easy-table')
 const groupBy               = require('./util/groupBy')
 const curriedGroupBy        = getter => list => groupBy(list, getter)
 
@@ -19,9 +19,6 @@ const sortMapKeysAsc        = map => Array.from(map.keys()).sort(sortAsc)
 
 const filterMyHoliday       = values => values[1].filter(e => e.employeeId === values[0].id)
 const filterHolidayEvents   = holiday => holiday.filter(e => e.policyTypeDisplayName.toLowerCase() === 'holiday')
-
-const timeOff               = holiday => `${fullDate(holiday.startDate)} ${portionMap.start[holiday.startDatePortion]} - ${fullDate(holiday.endDate)} ${portionMap.end[holiday.endDatePortion]}`
-const timeOffInBusinessDays = holiday => `(${diffDates(holiday.startDate, holiday.endDate)} business days)`
 
 const portionMap            = {
     start: {
@@ -43,19 +40,26 @@ Promise
     .then(curriedGroupBy(e => new Date(e.startDate).getMonth()))
     .then(map => {
         sortMapKeysAsc(map).forEach(month => {
-            // console.log(`${getTextualMonth(map.get(month)[0].startDate)}`)
-            const data = []
+            const t = new Table
 
             map
                 .get(month)
                 .sort()
                 .reverse()
-                .forEach(holiday => data.push({
-                    Start: fullDate(holiday.startDate),
-                    End: fullDate(holiday.endDate),
-                    Days: diffDates(holiday.startDate, holiday.endDate)
-                }))
+                .forEach(holiday => {
+                    t.cell('Start', `${fullDate(holiday.startDate)} ${portionMap.start[holiday.startDatePortion]}`)
+                    t.cell('End', `${fullDate(holiday.endDate)} ${portionMap.end[holiday.endDatePortion]}`)
+                    t.cell('Business Days', diffDates(holiday.startDate, holiday.endDate))
+                    t.newRow()
+                })
 
-            console.table(getTextualMonth(map.get(month)[0].startDate), data)
+            t.total('Business Days', {
+                printer: val => `${val} days.`,
+                reduce: (acc, val) => acc + val
+            })
+
+            console.info(getTextualMonth(map.get(month)[0].startDate))
+            console.info('-'.padStart(getTextualMonth(map.get(month)[0].startDate).length * 1.5, '-'))
+            console.log(t.toString())
         })
     })
